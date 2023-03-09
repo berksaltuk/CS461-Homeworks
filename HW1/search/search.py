@@ -92,24 +92,25 @@ def depthFirstSearch(problem: SearchProblem):
     startState = problem.getStartState()
 
     s = util.Stack()
-    expanded = set()
+    expanded = []
 
     # Keeping the state - path to arrive this state as key value pairs in the stack
-    s.push({startState: []})
+    s.push((startState, []))
 
     while not s.isEmpty():
         cur = s.pop()
-        for key_state, path_val in cur.items():
+        key_state, path_val = cur
 
-            if problem.isGoalState(key_state):
-                return path_val
+        if key_state in expanded:
+            continue
 
-            if key_state in expanded:
-                continue
+        if problem.isGoalState(key_state):
+            return path_val
 
-            expanded.add(key_state)
-            for next_state, facing_direction, action_cost in problem.getSuccessors(key_state):
-                s.push({next_state: path_val + [facing_direction]})
+        expanded.append(key_state)
+        for next_state, facing_direction, action_cost in problem.getSuccessors(key_state):
+            s.push((next_state, path_val + [facing_direction]))
+
 
 
 def breadthFirstSearch(problem: SearchProblem):
@@ -119,24 +120,24 @@ def breadthFirstSearch(problem: SearchProblem):
 
     # The only difference is that we use queue instead of a stack.
     q = util.Queue()
-    expanded = set()
+    expanded = []
 
     # Keeping the state - path to arrive this state as key value pairs in the queue this time.
-    q.push({startState: []})
+    q.push((startState, []))
 
     while not q.isEmpty():
         cur = q.pop()
-        for key_state, path_val in cur.items():
+        key_state, path_val = cur
 
-            if problem.isGoalState(key_state):
-                return path_val
+        if key_state in expanded:
+            continue
 
-            if key_state in expanded:
-                continue
+        if problem.isGoalState(key_state):
+            return path_val
 
-            expanded.add(key_state)
-            for next_state, facing_direction, action_cost in problem.getSuccessors(key_state):
-                q.push({next_state: path_val + [facing_direction]})
+        expanded.append(key_state)
+        for next_state, facing_direction, action_cost in problem.getSuccessors(key_state):
+            q.push((next_state, path_val + [facing_direction]))
 
 
 def uniformCostSearch(problem: SearchProblem):
@@ -145,26 +146,28 @@ def uniformCostSearch(problem: SearchProblem):
     startState = problem.getStartState()
 
     pq = util.PriorityQueue()
-    expanded = set()
+    expanded = []
 
     # Since pop operation only returns the item but not the priority, we should also keep track of priority
-    pq.push({startState: ([], 0)}, 0)
+    pq.push((startState, ([], 0)), 0)
     # Each element of priority queue is a path-cost tuple indexed by the state
 
     while not pq.isEmpty():
         cur = pq.pop()
-        for key_state, tuple in cur.items():
-            path_val, priority = tuple
+        key_state, tuple = cur
+        path_val, priority = tuple
 
-            if problem.isGoalState(key_state):
-                return path_val
+        if key_state in expanded:
+            continue
 
-            if key_state in expanded:
-                continue
+        if problem.isGoalState(key_state):
+            return path_val
 
-            expanded.add(key_state) 
-            for next_state, facing_direction, action_priority in problem.getSuccessors(key_state): # As path gets longer, priority value increases; priority in min heeap decreases
-                pq.push({next_state: (path_val + [facing_direction], priority + action_priority)}, priority + action_priority)
+        expanded.append(key_state)
+        # As path gets longer, priority value increases; priority in min heeap decreases
+        for next_state, facing_direction, action_priority in problem.getSuccessors(key_state):
+            pq.push((next_state, (
+                    path_val + [facing_direction], priority + action_priority)), priority + action_priority)
 
 
 def nullHeuristic(state, problem=None):
@@ -182,27 +185,27 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
 
     pq = util.PriorityQueue()
 
-    expanded = set()
+    expanded = []
 
-    pq.push({startState: ([], 0)}, 0)
+    pq.push((startState, ([], 0)), 0)
 
     while not pq.isEmpty():
         cur = pq.pop()
-        for key_state, tuple in cur.items():
-            path_val, priority = tuple
+        key_state, tuple = cur
+        path_val, priority = tuple
 
-            if problem.isGoalState(key_state):
-                return path_val
+        if key_state in expanded:
+            continue
 
-            if key_state in expanded:
-                continue
+        if problem.isGoalState(key_state):
+            return path_val
 
-            expanded.add(key_state)
-            for next_state, facing_direction, action_priority in problem.getSuccessors(key_state):
-                g = priority + action_priority
-                f = heuristic(next_state, problem) + g
-                pq.push({next_state: (
-                    path_val + [facing_direction], g)}, f)
+        expanded.append(key_state)
+        for next_state, facing_direction, action_priority in problem.getSuccessors(key_state):
+            g = priority + action_priority
+            f = heuristic(next_state, problem) + g
+            pq.push((next_state, (
+                    path_val + [facing_direction], g)), f)
 
 
 # Abbreviations
