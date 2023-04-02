@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -15,10 +15,12 @@
 import math
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random
+import util
 
 from game import Agent
 from pacman import GameState
+
 
 class ReflexAgent(Agent):
     """
@@ -29,7 +31,6 @@ class ReflexAgent(Agent):
     it in any way you see fit, so long as you don't touch our method
     headers.
     """
-
 
     def getAction(self, gameState: GameState):
         """
@@ -44,10 +45,13 @@ class ReflexAgent(Agent):
         legalMoves = gameState.getLegalActions()
 
         # Choose one of the best actions
-        scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
+        scores = [self.evaluationFunction(
+            gameState, action) for action in legalMoves]
         bestScore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        bestIndices = [index for index in range(
+            len(scores)) if scores[index] == bestScore]
+        # Pick randomly among the best
+        chosenIndex = random.choice(bestIndices)
 
         "Add more of your code here if you want to"
 
@@ -73,7 +77,8 @@ class ReflexAgent(Agent):
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newScaredTimes = [
+            ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
         minGhostDist = 9999
@@ -84,7 +89,7 @@ class ReflexAgent(Agent):
         for ghost in newGhostStates:
             if ghost.scaredTimer == 0:
                 distance = manhattanDistance(newPos, ghost.configuration.pos)
-                ghostDistances.append(distance) 
+                ghostDistances.append(distance)
                 if distance < minGhostDist:
                     minGhostDist = distance
             else:
@@ -139,6 +144,7 @@ class ReflexAgent(Agent):
 
         return score
 
+
 def scoreEvaluationFunction(currentGameState: GameState):
     """
     This default evaluation function just returns the score of the state.
@@ -148,6 +154,7 @@ def scoreEvaluationFunction(currentGameState: GameState):
     (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -164,10 +171,11 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
-    def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
+    def __init__(self, evalFn='scoreEvaluationFunction', depth='2'):
+        self.index = 0  # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
@@ -200,6 +208,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
 
+
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
@@ -211,6 +220,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -225,7 +235,50 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        pacmanActions = gameState.getLegalActions(0)
+
+        v = float('-inf')
+        action = None
+
+        for nextPacmanAction in pacmanActions:
+            successorValue = self.value(gameState.generateSuccessor(
+                0, nextPacmanAction), 1, 0)
+
+            if v < successorValue:
+                v = successorValue
+                action = nextPacmanAction
+
+        return action
+
+    def value(self, gameState, agentIndex, curDepth):
+        if (gameState.isWin() or gameState.isLose() or curDepth == self.depth):
+            return self.evaluationFunction(gameState)
+
+        if (agentIndex == 0):  # Our old friend pacman's turn
+            return self.max_value(gameState, 0, curDepth)
+        else:
+            return self.exp_value(gameState, agentIndex, curDepth)
+
+    def max_value(self, gameState, agentIndex, curDepth):
+        v = float('-inf')
+        # Agent is pacman which means agentIndex is 0, no need to check for next depth
+        for action in gameState.getLegalActions(agentIndex):
+            v = max(v, self.value(gameState.generateSuccessor(
+                    agentIndex, action), agentIndex + 1, curDepth))
+
+        return v
+
+    def exp_value(self, gameState, agentIndex, curDepth):
+        v = 0
+        for action in gameState.getLegalActions(agentIndex):
+            if (agentIndex == gameState.getNumAgents() - 1):  # Continue with the next depth
+                v += self.value(gameState.generateSuccessor(
+                    agentIndex, action), 0, curDepth + 1)
+            else:
+                v += self.value(gameState.generateSuccessor(
+                    agentIndex, action), agentIndex + 1, curDepth)
+        return v / len(gameState.getLegalActions(agentIndex))
+
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
@@ -236,6 +289,7 @@ def betterEvaluationFunction(currentGameState: GameState):
     """
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
+
 
 # Abbreviation
 better = betterEvaluationFunction
