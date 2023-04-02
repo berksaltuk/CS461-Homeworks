@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+import math
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -75,7 +76,68 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        minGhostDist = 9999
+        minFoodDist = 0
+        ghostDistances = []
+        score = successorGameState.getScore()
+
+        for ghost in newGhostStates:
+            if ghost.scaredTimer == 0:
+                distance = manhattanDistance(newPos, ghost.configuration.pos)
+                ghostDistances.append(distance) 
+                if distance < minGhostDist:
+                    minGhostDist = distance
+            else:
+                score += 10
+
+        # Encourage action that makes the pacman farther from the ghosts
+        score += 2 * minGhostDist
+
+        # Game Over:(
+        if minGhostDist == 0:
+            return -math.inf
+
+        if bool(successorGameState.getNumFood()):
+            food = currentGameState.getFood()
+            if food[newPos[0]][newPos[1]]:
+                minFoodDist = 0
+                return score
+            else:
+                foodDistances = [
+                    manhattanDistance(newPos, (x, y))
+                    for x in range(food.width)
+                    for y in range(food.height)
+                    if food[x][y]
+                ]
+                minFoodDist = min(foodDistances, default=0)
+                """ foodDistances = []
+                for x in range(food.width):
+                    for y in range(food.height):
+                        if food[x][y]: 
+                            food = manhattanDistance(newPos, (x, y))
+                            foodDistances.append(food)
+                            if food < minFoodDist:
+                                minFoodDist = food """
+
+                # Encourage action that makes the pacman closer to food
+                score -= minFoodDist * 2
+
+                # Encourage action that makes the pacman eat food
+                if successorGameState.getNumFood() < currentGameState.getNumFood():
+                    score += 5
+
+                # Disencourage stop action
+                if action == Directions.STOP:
+                    score -= 6
+
+                # Encourage action that makes the pacman eat capsules
+                if newPos in currentGameState.getCapsules():
+                    score += 10
+        else:
+            # Game is won:)
+            return math.inf
+
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
