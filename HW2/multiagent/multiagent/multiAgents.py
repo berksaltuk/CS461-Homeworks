@@ -88,10 +88,10 @@ class ReflexAgent(Agent):
                 if distance < minGhostDist:
                     minGhostDist = distance
             else:
-                score += 10
+                score += 5
 
         # Encourage action that makes the pacman farther from the ghosts
-        score += 2 * minGhostDist
+        score += 1.5 * minGhostDist
 
         # Game Over:(
         if minGhostDist == 0:
@@ -110,29 +110,21 @@ class ReflexAgent(Agent):
                     if food[x][y]
                 ]
                 minFoodDist = min(foodDistances, default=0)
-                """ foodDistances = []
-                for x in range(food.width):
-                    for y in range(food.height):
-                        if food[x][y]: 
-                            food = manhattanDistance(newPos, (x, y))
-                            foodDistances.append(food)
-                            if food < minFoodDist:
-                                minFoodDist = food """
 
                 # Encourage action that makes the pacman closer to food
-                score -= minFoodDist * 2
+                score -= minFoodDist * 1.5
 
                 # Encourage action that makes the pacman eat food
                 if successorGameState.getNumFood() < currentGameState.getNumFood():
-                    score += 5
+                    score += 7
 
                 # Disencourage stop action
                 if action == Directions.STOP:
-                    score -= 6
+                    score -= 10
 
                 # Encourage action that makes the pacman eat capsules
                 if newPos in currentGameState.getCapsules():
-                    score += 10
+                    score += 15
         else:
             # Game is won:)
             return math.inf
@@ -198,7 +190,53 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.maxi(gameState, 1, gameState.getNumAgents() - 1)
+    
+    def mini(self, gameState, depth, agentIndex, ghostNum):
+        value = math.inf
+            
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+            
+        legalActions = gameState.getLegalActions(agentIndex)
+            
+        successors = []
+        for action in legalActions:
+            successors.append(gameState.generateSuccessor(agentIndex, action))
+            
+        if agentIndex == ghostNum:
+            if depth < self.depth:
+                for successor in successors:
+                    value = min(value, self.maxi(successor, depth+1, ghostNum))
+            else:
+                for successor in successors:
+                    value = min(value, self.evaluationFunction(successor))
+        else:
+            for successor in successors:
+                value = min(value, self.mini(successor, depth, agentIndex+1, ghostNum))
+                    
+        return value
+    def maxi(self, gameState, depth, ghostNum):
+        value = -math.inf
+        best = Directions.STOP
+        
+        if gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState)
+
+        legalActions = gameState.getLegalActions(0)
+        best = Directions.STOP
+
+        for action in legalActions:
+            successor = gameState.generateSuccessor(0, action)
+            val = self.mini(successor, depth, 1, ghostNum)
+            if value < val:
+                value = val
+                best = action
+        if depth > 1:
+            return value
+                
+        return best        
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
