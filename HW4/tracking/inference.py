@@ -62,7 +62,6 @@ def constructBayesNet(gameState: hunters.GameState):
     variableDomainsDict = {}
 
     "*** YOUR CODE HERE ***"
-    "*** YOUR CODE HERE ***"
     variables = [GHOST0, PAC, GHOST1, OBS0, OBS1]
     edges = [(GHOST0, OBS0), (PAC, OBS0), (PAC, OBS1), (GHOST1, OBS1)]
 
@@ -78,7 +77,6 @@ def constructBayesNet(gameState: hunters.GameState):
     variableDomainsDict[OBS1] = [
         i for i in range(X_RANGE + Y_RANGE + MAX_NOISE - 1)]
 
-    "*** END YOUR CODE HERE ***"
     "*** END YOUR CODE HERE ***"
 
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
@@ -98,7 +96,7 @@ def inferenceByEnumeration(bayesNet: bn, queryVariables: List[str], evidenceDict
                     the inference query.
     evidenceDict:   An assignment dict {variable : value} for the
                     variables which are presented as evidence
-                    (conditioned) in the inference query. 
+                    (conditioned) in the inference query.
     """
     callTrackingList = []
     joinFactorsByVariable = joinFactorsByVariableWithCallTracking(
@@ -159,19 +157,19 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
         to eliminationOrder.  See inferenceByEnumeration for an example on
         how to use these functions.
 
-        You need to use joinFactorsByVariable to join all of the factors 
-        that contain a variable in order for the autograder to 
-        recognize that you performed the correct interleaving of 
+        You need to use joinFactorsByVariable to join all of the factors
+        that contain a variable in order for the autograder to
+        recognize that you performed the correct interleaving of
         joins and eliminates.
 
-        If a factor that you are about to eliminate a variable from has 
-        only one unconditioned variable, you should not eliminate it 
-        and instead just discard the factor.  This is since the 
-        result of the eliminate would be 1 (you marginalize 
-        all of the unconditioned variables), but it is not a 
+        If a factor that you are about to eliminate a variable from has
+        only one unconditioned variable, you should not eliminate it
+        and instead just discard the factor.  This is since the
+        result of the eliminate would be 1 (you marginalize
+        all of the unconditioned variables), but it is not a
         valid factor.  So this simplifies using the result of eliminate.
 
-        The sum of the probabilities should sum to one (so that it is a true 
+        The sum of the probabilities should sum to one (so that it is a true
         conditional probability, conditioned on the evidence).
 
         bayesNet:         The Bayes Net on which we are making a query.
@@ -179,12 +177,12 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
                           in the inference query.
         evidenceDict:     An assignment dict {variable : value} for the
                           variables which are presented as evidence
-                          (conditioned) in the inference query. 
+                          (conditioned) in the inference query.
         eliminationOrder: The order to eliminate the variables in.
 
-        Hint: BayesNet.getAllCPTsWithEvidence will return all the Conditional 
-        Probability Tables even if an empty dict (or None) is passed in for 
-        evidenceDict. In this case it will not specialize any variable domains 
+        Hint: BayesNet.getAllCPTsWithEvidence will return all the Conditional
+        Probability Tables even if an empty dict (or None) is passed in for
+        evidenceDict. In this case it will not specialize any variable domains
         in the CPTs.
 
         Useful functions:
@@ -205,17 +203,15 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
             eliminationOrder = sorted(list(eliminationVariables))
 
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        factors = bayesNet.getAllCPTsWithEvidence(evidenceDict)
-        print(factors)
-        for joinedVariable in eliminationOrder:
-            factors, joinedFactor = joinFactorsByVariable(
-                factors, joinedVariable)
-            if len(joinedFactor.unconditionedVariables()) > 1:
-                eliminatedFactor = eliminate(joinedFactor, joinedVariable)
-                factors.append(eliminatedFactor)
-        inferenceFactor = joinFactors(factors)
-        return normalize(inferenceFactor)
+        cpts = bayesNet.getAllCPTsWithEvidence(evidenceDict)
+
+        for var in eliminationOrder:
+            cpts, f = joinFactorsByVariable(cpts, var)
+
+            if len(f.unconditionedVariables()) > 1:
+                cpts.append(eliminate(f, var))
+
+        return normalize(joinFactors(cpts))
         "*** END YOUR CODE HERE ***"
 
     return inferenceByVariableElimination
@@ -242,8 +238,8 @@ def sampleFromFactorRandomSource(randomSource=None):
 
         Useful for inferenceByLikelihoodWeightingSampling
 
-        Returns an assignmentDict that contains the conditionedAssignments but 
-        also a random assignment of the unconditioned variables given their 
+        Returns an assignmentDict that contains the conditionedAssignments but
+        also a random assignment of the unconditioned variables given their
         probability.
         """
         if conditionedAssignments is None and len(factor.conditionedVariables()) > 0:
@@ -363,13 +359,12 @@ class DiscreteDistribution(dict):
         {}
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        total = self.total()
-        if total == 0:
+        tot = self.total()
+        if tot == 0:
             return
-        if total > 0:
-            for key in self:
-                self[key] = self[key] / total
+
+        for key in self.keys():
+            self[key] = self[key] / tot
         "*** END YOUR CODE HERE ***"
 
     def sample(self):
@@ -394,18 +389,18 @@ class DiscreteDistribution(dict):
         0.0
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        sampleCopy = self.copy()
-        sampleCopy.normalize()
-        sortedItems = sorted(sampleCopy.items())
-        randint = random.random()
+        self.normalize()
 
-        i = 0
-        for key, probability in sorted(sortedItems):
-            if i <= randint < probability + i:
-                return key
-            else:
-                i += probability
+        sampled = random.random()
+
+        items_copied = self.copy()
+
+        sumSoFar = 0
+
+        for k, v in sorted(items_copied.items()):
+            sumSoFar += v
+            if sampled <= sumSoFar:
+                return k
         "*** END YOUR CODE HERE ***"
 
 
@@ -483,18 +478,15 @@ class InferenceModule:
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        # ghost jailed and obs 0
         if ghostPosition == jailPosition and noisyDistance is None:
             return 1
-        # ghost jailed and obs is 1
         if ghostPosition == jailPosition and noisyDistance is not None:
             return 0
-        # ghost is free and obs is 1
-        if noisyDistance is not None and ghostPosition != jailPosition:
-            distance = manhattanDistance(pacmanPosition, ghostPosition)
-            return busters.getObservationProbability(noisyDistance, distance)
-        return 0
+        if noisyDistance == None:
+            return 0
+
+        return busters.getObservationProbability(noisyDistance, manhattanDistance(ghostPosition, pacmanPosition))
+
         "*** END YOUR CODE HERE ***"
 
     def setGhostPosition(self, gameState, ghostPosition, index):
@@ -610,14 +602,13 @@ class ExactInference(InferenceModule):
         position is known.
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        pacmanPos = gameState.getPacmanPosition()
-        jailPos = self.getJailPosition()
-        ghostPoss = self.allPositions
+        dist = DiscreteDistribution()
 
-        for distance in ghostPoss:
-            self.beliefs[distance] *= self.getObservationProb(
-                observation, pacmanPos, distance, jailPos)
+        for pos in self.allPositions:
+            dist[pos] = self.getObservationProb(
+                observation, gameState.getPacmanPosition(), pos, self.getJailPosition()) * self.beliefs[pos]
+        dist.normalize()
+        self.beliefs = dist
         "*** END YOUR CODE HERE ***"
         self.beliefs.normalize()
 
@@ -635,14 +626,14 @@ class ExactInference(InferenceModule):
         current position is known.
         """
         "*** YOUR CODE HERE ***"
-        # raiseNotDefined()
-        newNoisyDistance = DiscreteDistribution()
-        for currentPos in self.allPositions:
-            newPos = self.getPositionDistribution(gameState, currentPos)
-            for x in newPos:
-                newNoisyDistance[x] += newPos[x]*self.beliefs[currentPos]
-        self.beliefs = newNoisyDistance
+        dist = DiscreteDistribution()
+
+        for oldPos in self.allPositions:
+            newDist = self.getPositionDistribution(gameState, oldPos)
+            for newPos in newDist:
+                dist[newPos] += newDist[newPos] * self.beliefs[oldPos]
         "*** END YOUR CODE HERE ***"
+        self.beliefs = dist
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -674,7 +665,10 @@ class ParticleFilter(InferenceModule):
         """
         self.particles = []
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        pos = self.legalPositions
+
+        self.particles = [pos[each % len(pos)]
+                          for each in range(self.numParticles)]
         "*** END YOUR CODE HERE ***"
 
     def getBeliefDistribution(self):
@@ -686,7 +680,14 @@ class ParticleFilter(InferenceModule):
         This function should return a normalized distribution.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        dist = DiscreteDistribution()
+
+        for p in self.particles:
+            dist[p] += 1
+
+        dist.normalize()
+
+        return dist
         "*** END YOUR CODE HERE ***"
 
     ########### ########### ###########
@@ -706,7 +707,19 @@ class ParticleFilter(InferenceModule):
         the DiscreteDistribution may be useful.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        dist = DiscreteDistribution()
+        for p in self.particles:
+            w = self.getObservationProb(
+                observation, gameState.getPacmanPosition(), p, self.getJailPosition())
+            dist[p] += w
+        dist.normalize()
+
+        if dist.total() == 0:
+            ParticleFilter.initializeUniformly(self, gameState)
+        else:
+            self.particles = [dist.sample()
+                              for i in range(len(self.particles))]
+
         "*** END YOUR CODE HERE ***"
 
     ########### ########### ###########
@@ -719,5 +732,11 @@ class ParticleFilter(InferenceModule):
         gameState.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        p = []
+
+        for oldPos in self.particles:
+            newPositions = self.getPositionDistribution(gameState, oldPos)
+            p.append(newPositions.sample())
+
+        self.particles = p
         "*** END YOUR CODE HERE ***"
